@@ -1,5 +1,0 @@
-C:\Users\John\Desktop\WiiTUIO\WiiTUIO\WiiTUIO\OSC.NET\bin\Debug\OSC.NET.dll
-C:\Users\John\Desktop\WiiTUIO\WiiTUIO\WiiTUIO\OSC.NET\bin\Debug\OSC.NET.pdb
-C:\Users\John\Desktop\WiiTUIO\WiiTUIO\WiiTUIO\OSC.NET\obj\Debug\ResolveAssemblyReference.cache
-C:\Users\John\Desktop\WiiTUIO\WiiTUIO\WiiTUIO\OSC.NET\obj\Debug\OSC.NET.dll
-C:\Users\John\Desktop\WiiTUIO\WiiTUIO\WiiTUIO\OSC.NET\obj\Debug\OSC.NET.pdb
