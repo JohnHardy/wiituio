@@ -1,0 +1,386 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Linq;
+using System.Text;
+using System.Windows;
+using System.Windows.Controls;
+using System.Windows.Data;
+using System.Windows.Documents;
+using System.Windows.Input;
+using System.Windows.Media;
+using System.Windows.Media.Imaging;
+using System.Windows.Navigation;
+using System.Windows.Shapes;
+
+using WiiTUIO.Provider;
+using OSC.NET;
+
+namespace WiiTUIO
+{
+    /// <summary>
+    /// Interaction logic for Window1.xaml
+    /// </summary>
+    public partial class ClientForm : Window
+    {
+        /// <summary>
+        /// A reference to the WiiProvider we want to use to get/forward input.
+        /// </summary>
+        private WiiProvider pWiiProvider = null;
+
+        /// <summary>
+        /// A reference to an OSC data transmitter.
+        /// </summary>
+        private OSCTransmitter pUDPWriter = null;
+
+        /// <summary>
+        /// A refrence to the calibration window.
+        /// </summary>
+        private CalibrationWindow pCalibrationWindow = null;
+
+        /// <summary>
+        /// Boolean to tell if we are connected to the mote and network.
+        /// </summary>
+        private bool bConnected = false;
+
+        /// <summary>
+        /// Boolean to tell if we have received a reconnect command.
+        /// </summary>
+        private bool bReconnect = false;
+
+        /// <summary>
+        /// Construct a new Window.
+        /// </summary>
+        public ClientForm()
+        {
+            InitializeComponent();
+        }
+
+        /// <summary>
+        /// Called when the IP Address has been changed.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void txtIPAddress_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // Flag that we want to reconnect.
+            bReconnect = true;
+            btnConnect.Content = "Reconnect";
+        }
+
+        /// <summary>
+        /// Called when the port has been changed.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void txtPort_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // Flag that we want to reconnect.
+            bReconnect = true;
+            btnConnect.Content = "Reconnect";
+        }
+
+        /// <summary>
+        /// Called when the calibrate button has been clicked.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnCalibrate_Click(object sender, RoutedEventArgs e)
+        {
+            // Create a calibrate form.
+            if (pCalibrationWindow != null)
+                pCalibrationWindow.Close();
+
+            try
+            {
+                // Create a new calibration window.
+                this.pCalibrationWindow = new CalibrationWindow();
+                //this.pCalibrationWindow.Topmost = true;
+                this.pCalibrationWindow.WindowStyle = WindowStyle.None;
+                this.pCalibrationWindow.WindowState = WindowState.Maximized;
+                this.pCalibrationWindow.Show();
+
+                // Event handler for the finish calibration.
+                this.pCalibrationWindow.CalibrationCanvas.OnCalibrationFinished += new Action(CalibrationCanvas_OnCalibrationFinished);
+
+                // Begin the calibration.
+                this.pCalibrationWindow.CalibrationCanvas.beginCalibration(this.pWiiProvider);
+            }
+            catch (Exception pError)
+            {
+                MessageBox.Show(pError.Message, "WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        /// <summary>
+        /// This is called when calibration is finished.
+        /// </summary>
+        private void CalibrationCanvas_OnCalibrationFinished()
+        {
+            // Close the calibration window.
+            if (pCalibrationWindow != null)
+            {
+                pCalibrationWindow.Close();
+            }
+        }
+
+        /// <summary>
+        /// Called when the 'About' button is clicked.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnAbout_Click(object sender, RoutedEventArgs e)
+        {
+            String sMessage = "WiiTUIO was written by John Hardy of the HighWire department at Lancaster University.";
+            sMessage += "\nYou can contact him at: hardyj2@unix.lancs.ac.uk";
+            sMessage += "\n";
+            sMessage += "\nCredits:";
+            sMessage += "\n\tJohnny Chung Lee: http://johnnylee.net/projects/wii/";
+            sMessage += "\n\tBrian Peek: http://www.brianpeek.com/";
+            sMessage += "\n\tTUIO Project: http://www.tuio.org";
+            sMessage += "\n\tOSC.NET Library: http://luvtechno.net/";
+            MessageBox.Show(sMessage, "About WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Information);
+        }
+
+        /// <summary>
+        /// Called when the 'Connect' or 'Disconnect' button is clicked.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnConnect_Click(object sender, RoutedEventArgs e)
+        {
+            // If we are in reconnect mode..
+            if (bReconnect)
+            {
+                disconnectProviders();
+                disconnectTransmitter();
+                btnConnect.Content = "Connect";
+                bConnected = false;
+                bReconnect = false;
+            }
+
+            // If we have been asked to connect.
+            if (!bConnected)
+            {
+                // Connect.
+                if (this.createProviders() && this.connectTransmitter())
+                {
+                    btnConnect.Content = "Disconnect";
+                    bConnected = true;
+                }
+                else
+                {
+                    disconnectProviders();
+                    disconnectTransmitter();
+                    btnConnect.Content = "Connect";
+                    bConnected = false;
+                }
+            }
+
+            // Otherwise be sure I am disconnected.
+            else
+            {
+                disconnectProviders();
+                disconnectTransmitter();
+                btnConnect.Content = "Connect";
+                bConnected = false;
+            }
+        }
+
+        private static int iFrame = 0;
+        /// <summary>
+        /// Process an event frame and convert the data into a TUIO message.
+        /// </summary>
+        /// <param name="e"></param>
+        private void processEventFrame(FrameEventArgs e)
+        {
+            // Create an new TUIO Bundle
+            OSCBundle pBundle = new OSCBundle();
+
+            // Create a fseq message and save it.  This is to associate a unique frame id with a bundle of SET and ALIVE.
+            OSCMessage pMessageFseq = new OSCMessage("/tuio/2Dcur");
+            pMessageFseq.Append("fseq");
+            pMessageFseq.Append(++iFrame);//(int)e.Timestamp);
+            pBundle.Append(pMessageFseq);
+
+            // Create a alive message.
+            OSCMessage pMessageAlive = new OSCMessage("/tuio/2Dcur");
+            pMessageAlive.Append("alive");
+
+            // Now we want to take the raw frame data and draw points based on its data.
+            foreach (WiiContact pContact in e.Contacts)
+            {
+                // Compile the set message.
+                OSCMessage pMessage = new OSCMessage("/tuio/2Dcur");
+                pMessage.Append("set");                 // set
+                pMessage.Append((int)pContact.ID);           // session
+                pMessage.Append((float)pContact.NormalPosition.X);   // x
+                pMessage.Append((float)pContact.NormalPosition.Y);   // y
+                pMessage.Append(0f);                 // dx
+                pMessage.Append(0f);                 // dy
+                pMessage.Append(0f);                 // motion
+                pMessage.Append((float)pContact.Size.X);   // height
+                pMessage.Append((float)pContact.Size.Y);   // width
+
+                // Append it to the bundle.
+                pBundle.Append(pMessage);
+
+                // Append the alive message for this contact to tbe bundle.
+                pMessageAlive.Append((int)pContact.ID);
+            }
+            
+            // Save the alive message.
+            pBundle.Append(pMessageAlive);
+            
+            // Send the message off.
+            this.pUDPWriter.Send(pBundle);
+        }
+
+        /// <summary>
+        /// This is called when the WiiProvider has a new set of input to send.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void pWiiProvider_OnNewFrame(object sender, FrameEventArgs e)
+        {
+            // Are we calibrating.
+            if (this.pCalibrationWindow != null)
+                if (this.pCalibrationWindow.CalibrationCanvas.IsCalibrating)
+                    return;
+
+            // If dispatching events is enabled.
+            if (bConnected)
+            {
+                // Call these in another thread.
+                Dispatcher.BeginInvoke(new Action(delegate()
+                {
+                    processEventFrame(e);
+                }), null);
+            }
+        }
+
+        /// <summary>
+        /// This is called when the battery state changes.
+        /// </summary>
+        /// <param name="obj"></param>
+        private void pWiiProvider_OnBatteryUpdate(int obj)
+        {
+            // Dispatch it.
+            Dispatcher.BeginInvoke(new Action(delegate()
+            {
+                this.barBattery.Value = obj;
+            }), null);
+        }
+
+
+        #region Create and Die
+        /// <summary>
+        /// Connect the UDP transmitter using the port and IP specified above.
+        /// </summary>
+        /// <returns></returns>
+        private bool connectTransmitter()
+        {
+            try
+            {
+                // Close any open connections.
+                disconnectTransmitter();
+
+                // Reconnect with the new API.
+                pUDPWriter = new OSCTransmitter(txtIPAddress.Text, Int32.Parse(txtPort.Text));
+                pUDPWriter.Connect();
+                return true;
+            }
+            catch (Exception pError)
+            {
+                // Tear down.
+                try
+                {
+                    this.disconnectTransmitter();
+                }
+                catch { }
+
+                // Report the error.
+                MessageBox.Show(pError.Message, "WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Disconnect the UDP Transmitter.
+        /// </summary>
+        /// <returns></returns>
+        private void disconnectTransmitter()
+        {
+            // Close any open connections.
+            if (pUDPWriter != null)
+                pUDPWriter.Close();
+            pUDPWriter = null;
+        }
+
+        /// <summary>
+        /// Try to create the WiiProvider (this involves connecting to the Wiimote).
+        /// </summary>
+        private bool createProviders()
+        {
+            try
+            {
+                // Connect a Wiimote, hook events then start.
+                this.pWiiProvider = new WiiProvider();
+                this.pWiiProvider.OnNewFrame += new EventHandler<FrameEventArgs>(pWiiProvider_OnNewFrame);
+                this.pWiiProvider.OnBatteryUpdate += new Action<int>(pWiiProvider_OnBatteryUpdate);
+                this.pWiiProvider.start();
+                return true;
+            }
+            catch (Exception pError)
+            {
+                // Tear down.
+                try
+                {
+                    this.disconnectProviders();
+                }
+                catch { }
+
+                // Report the error.
+                MessageBox.Show(pError.Message, "WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Tear down the provider connections.
+        /// </summary>
+        private void disconnectProviders()
+        {
+            // Disconnect the Wiimote.
+            if (this.pWiiProvider != null)
+                this.pWiiProvider.stop();
+            this.pWiiProvider = null;
+        }
+
+        /// <summary>
+        /// Raises the <see cref="E:System.Windows.Window.SourceInitialized"/> event.
+        /// </summary>
+        /// <param name="e">An <see cref="T:System.EventArgs"/> that contains the event data.</param>
+        protected override void OnSourceInitialized(EventArgs e)
+        {
+            // Create the providers.
+            this.createProviders();
+
+            // Call the base class.
+            base.OnSourceInitialized(e);
+        }
+
+        /// <summary>
+        /// Raises the <see cref="E:System.Windows.Window.OnClosing"/> event.
+        /// </summary>
+        /// <param name="e">An <see cref="T:System.ComponentModel.CancelEventArgs"/> that contains the event data.</param>
+        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        {
+            // Disconnect the providers.
+            this.disconnectProviders();
+
+            // Call the base class.
+            base.OnClosing(e);
+        }
+        #endregion
+    }
+}
