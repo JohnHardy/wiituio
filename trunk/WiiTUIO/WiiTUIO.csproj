@@ -124,7 +124,6 @@
     </Compile>
     <Compile Include="WiiProvider\ContactType.cs" />
     <Compile Include="WiiProvider\FrameEventArgs.cs" />
-    <Compile Include="WiiProvider\PersistentCalibration.cs" />
     <Compile Include="WiiProvider\SpatiotemporalClassifier.cs" />
     <Compile Include="WiiProvider\Warper.cs" />
     <Compile Include="WiiProvider\WiiContact.cs" />

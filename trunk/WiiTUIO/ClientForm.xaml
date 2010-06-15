@@ -13,7 +13,7 @@
         <Button Height="23" Margin="93,53,112,0" Name="btnCalibrate" VerticalAlignment="Top" Click="btnCalibrate_Click">Calibrate</Button>
         <Button Height="23" HorizontalAlignment="Right" Margin="0,53,10,0" Name="btnAbout" VerticalAlignment="Top" Width="75" Click="btnAbout_Click">About</Button>
         <Image Height="32" HorizontalAlignment="Right" Margin="0,0,12,10" Name="image1" Stretch="Fill" VerticalAlignment="Bottom" Width="60" Source="Lancaster.png" />
-        <TextBox Height="23" Margin="12,24,107,0" Name="txtIPAddress" VerticalAlignment="Top" TextChanged="txtIPAddress_TextChanged">127.0.0.1</TextBox>
-        <TextBox Height="23" HorizontalAlignment="Right" Margin="0,24,10,0" Name="txtPort" VerticalAlignment="Top" Width="71" TextChanged="txtPort_TextChanged">3333</TextBox>
+        <TextBox Height="23" Margin="12,24,107,0" Name="txtIPAddress" VerticalAlignment="Top">127.0.0.1</TextBox>
+        <TextBox Height="23" HorizontalAlignment="Right" Margin="0,24,10,0" Name="txtPort" VerticalAlignment="Top" Width="71">3333</TextBox>
     </Grid>
 </Window>

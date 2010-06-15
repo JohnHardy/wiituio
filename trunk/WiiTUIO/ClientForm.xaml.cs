@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using System.IO;
+using System.Runtime.Serialization.Formatters.Binary;
 using System.Windows;
 using System.Windows.Controls;
 using System.Windows.Data;
@@ -117,7 +119,7 @@ namespace WiiTUIO
         private void CalibrationCanvas_OnCalibrationFinished(WiiProvider.CalibrationRectangle pSource, WiiProvider.CalibrationRectangle pDestination, Vector vScreenSize)
         {
             // Persist the calibration data
-            if (!PersistentCalibration.savePersistentCalibration("./Calibration.dat", new PersistentCalibrationData(pSource, pDestination, vScreenSize)))
+            if (!savePersistentCalibration("./Calibration.dat", new PersistentCalibrationData(pSource, pDestination, vScreenSize)))
             {
                 // Error - Failed to save calibration data
                 MessageBox.Show("Failed to save calibration data", "WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Error);
@@ -171,8 +173,14 @@ namespace WiiTUIO
                 // Connect.
                 if (this.createProviders() && this.connectTransmitter())
                 {
+                    // Update the button to say we are connected.
                     btnConnect.Content = "Disconnect";
                     bConnected = true;
+
+                    // Load calibration data.
+                    PersistentCalibrationData oData = loadPersistentCalibration("./Calibration.dat");
+                    if (oData != null)
+                        this.pWiiProvider.setCalibrationData(oData.Source, oData.Destination, oData.ScreenSize);
                 }
                 else
                 {
@@ -370,7 +378,11 @@ namespace WiiTUIO
         protected override void OnSourceInitialized(EventArgs e)
         {
             // Create the providers.
-            this.createProviders();
+            //this.createProviders();
+
+            // Add text change events
+            txtIPAddress.TextChanged += txtIPAddress_TextChanged;
+            txtPort.TextChanged += txtPort_TextChanged;
 
             // Call the base class.
             base.OnSourceInitialized(e);
@@ -389,5 +401,81 @@ namespace WiiTUIO
             base.OnClosing(e);
         }
         #endregion
+
+        /// <summary>
+        /// Creates and saves a file which contains the calibration data.
+        /// </summary>
+        /// <param name="sFile">The location of the file to persist to</param>
+        /// <param name="oData">The calibration data to persist</param>
+        public static bool savePersistentCalibration(string sFile, PersistentCalibrationData oData)
+        {
+            try
+            {
+                FileStream stream = File.Open(sFile, FileMode.Create);
+                new BinaryFormatter().Serialize(stream, oData);
+                stream.Close();
+                return true;
+            }
+            catch (Exception)
+            {
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Loads the specified file, which should contain calibration data.
+        /// </summary>
+        /// <param name="sFile">The location of the file to load</param>
+        public static PersistentCalibrationData loadPersistentCalibration(string sFile)
+        {
+            try
+            {
+                if (File.Exists(sFile))
+                {
+                    // De-serialise data from file
+                    Stream stream = File.Open(sFile, FileMode.Open);
+                    PersistentCalibrationData data = (PersistentCalibrationData)new BinaryFormatter().Deserialize(stream);
+                    stream.Close();
+                    return data;
+                }
+                return null;
+            }
+            catch (Exception)
+            {
+                return null;
+            }
+        }
     }
+
+    /// <summary>
+    /// Wrapper class for persistent calibration data.
+    /// This classes is required for saving data and is also returned from a load.
+    /// </summary>
+    [Serializable]
+    public class PersistentCalibrationData
+    {
+        /// <summary> The source calibration rectangle. </summary>
+        public WiiProvider.CalibrationRectangle Source { get; private set; }
+        /// <summary> The destination calibration rectangle. </summary>
+        public WiiProvider.CalibrationRectangle Destination { get; private set; }
+        /// <summary> The screen size. </summary>
+        public Vector ScreenSize { get; private set; }
+        /// <summary> When the calibration data swas created. </summary>
+        public DateTime TimeStamp { get; private set; }
+
+        /// <summary>
+        /// Creates a wrapper object for persisting calibration data.
+        /// </summary>
+        /// <param name="pSource">The source calibration rectangle</param>
+        /// <param name="pDestination">The destination calibration rectangle</param>
+        /// <param name="vScreenSize">The screen size</param>
+        public PersistentCalibrationData(WiiProvider.CalibrationRectangle pSource, WiiProvider.CalibrationRectangle pDestination, Vector vScreenSize)
+        {
+            this.Source = pSource;
+            this.Destination = pDestination;
+            this.ScreenSize = vScreenSize;
+            this.TimeStamp = DateTime.Now;
+        }
+    }
+
 }
