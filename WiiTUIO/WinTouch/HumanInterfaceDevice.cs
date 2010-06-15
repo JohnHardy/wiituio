@@ -11,7 +11,7 @@ namespace WiiTUIO.WinTouch
     /// <summary>
     /// An enumeration which describes the different states that HID contacts can be in.
     /// </summary>
-    internal enum HidContactState
+    public enum HidContactState
     {
         /// <summary>
         /// The contact is an add signal.

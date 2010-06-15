@@ -14,6 +14,7 @@ using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
 
+using WiiTUIO.WinTouch;
 using WiiTUIO.Provider;
 using OSC.NET;
 
@@ -33,6 +34,11 @@ namespace WiiTUIO
         /// A reference to an OSC data transmitter.
         /// </summary>
         private OSCTransmitter pUDPWriter = null;
+
+        /// <summary>
+        /// A reference to the windows 7 HID driver data provider.  This takes data from the <see cref="pWiiProvider"/> and transforms it.
+        /// </summary>
+        private ProviderHandler pTouchDevice = null;
 
         /// <summary>
         /// A refrence to the calibration window.
@@ -162,6 +168,7 @@ namespace WiiTUIO
             {
                 disconnectProviders();
                 disconnectTransmitter();
+                disconnectWindowsTouch();
                 btnConnect.Content = "Connect";
                 bConnected = false;
                 bReconnect = false;
@@ -171,7 +178,7 @@ namespace WiiTUIO
             if (!bConnected)
             {
                 // Connect.
-                if (this.createProviders() && this.connectTransmitter())
+                if (this.createProviders() && this.connectTransmitter() && this.connectWindowsTouch())
                 {
                     // Update the button to say we are connected.
                     btnConnect.Content = "Disconnect";
@@ -186,6 +193,7 @@ namespace WiiTUIO
                 {
                     disconnectProviders();
                     disconnectTransmitter();
+                    disconnectWindowsTouch();
                     btnConnect.Content = "Connect";
                     bConnected = false;
                 }
@@ -196,6 +204,7 @@ namespace WiiTUIO
             {
                 disconnectProviders();
                 disconnectTransmitter();
+                disconnectWindowsTouch();
                 btnConnect.Content = "Connect";
                 bConnected = false;
             }
@@ -208,46 +217,76 @@ namespace WiiTUIO
         /// <param name="e"></param>
         private void processEventFrame(FrameEventArgs e)
         {
-            // Create an new TUIO Bundle
-            OSCBundle pBundle = new OSCBundle();
-
-            // Create a fseq message and save it.  This is to associate a unique frame id with a bundle of SET and ALIVE.
-            OSCMessage pMessageFseq = new OSCMessage("/tuio/2Dcur");
-            pMessageFseq.Append("fseq");
-            pMessageFseq.Append(++iFrame);//(int)e.Timestamp);
-            pBundle.Append(pMessageFseq);
-
-            // Create a alive message.
-            OSCMessage pMessageAlive = new OSCMessage("/tuio/2Dcur");
-            pMessageAlive.Append("alive");
-
-            // Now we want to take the raw frame data and draw points based on its data.
-            foreach (WiiContact pContact in e.Contacts)
+            // If Windows 7 events are enabled.
+            if (true)
             {
-                // Compile the set message.
-                OSCMessage pMessage = new OSCMessage("/tuio/2Dcur");
-                pMessage.Append("set");                 // set
-                pMessage.Append((int)pContact.ID);           // session
-                pMessage.Append((float)pContact.NormalPosition.X);   // x
-                pMessage.Append((float)pContact.NormalPosition.Y);   // y
-                pMessage.Append(0f);                 // dx
-                pMessage.Append(0f);                 // dy
-                pMessage.Append(0f);                 // motion
-                pMessage.Append((float)pContact.Size.X);   // height
-                pMessage.Append((float)pContact.Size.Y);   // width
+                // For every contact in the list of contacts.
+                foreach (WiiContact pContact in e.Contacts)
+                {
+                    // Construct a new HID frame based on the contact type.
+                    switch (pContact.Type)
+                    {
+                        case ContactType.Start:
+                            this.pTouchDevice.enqueueContact(HidContactState.Adding, pContact);
+                            break;
+                        case ContactType.Move:
+                            this.pTouchDevice.enqueueContact(HidContactState.Updated, pContact);
+                            break;
+                        case ContactType.End:
+                            this.pTouchDevice.enqueueContact(HidContactState.Removing, pContact);
+                            break;
+                    }
+                }
 
-                // Append it to the bundle.
-                pBundle.Append(pMessage);
-
-                // Append the alive message for this contact to tbe bundle.
-                pMessageAlive.Append((int)pContact.ID);
+                // Flush the contacts?
+                // this.pTouchDevice.sendContacts();
             }
-            
-            // Save the alive message.
-            pBundle.Append(pMessageAlive);
-            
-            // Send the message off.
-            this.pUDPWriter.Send(pBundle);
+
+
+            // If TUIO events are enabled.
+            if (true)
+            {
+                // Create an new TUIO Bundle
+                OSCBundle pBundle = new OSCBundle();
+
+                // Create a fseq message and save it.  This is to associate a unique frame id with a bundle of SET and ALIVE.
+                OSCMessage pMessageFseq = new OSCMessage("/tuio/2Dcur");
+                pMessageFseq.Append("fseq");
+                pMessageFseq.Append(++iFrame);//(int)e.Timestamp);
+                pBundle.Append(pMessageFseq);
+
+                // Create a alive message.
+                OSCMessage pMessageAlive = new OSCMessage("/tuio/2Dcur");
+                pMessageAlive.Append("alive");
+
+                // Now we want to take the raw frame data and draw points based on its data.
+                foreach (WiiContact pContact in e.Contacts)
+                {
+                    // Compile the set message.
+                    OSCMessage pMessage = new OSCMessage("/tuio/2Dcur");
+                    pMessage.Append("set");                 // set
+                    pMessage.Append((int)pContact.ID);           // session
+                    pMessage.Append((float)pContact.NormalPosition.X);   // x
+                    pMessage.Append((float)pContact.NormalPosition.Y);   // y
+                    pMessage.Append(0f);                 // dx
+                    pMessage.Append(0f);                 // dy
+                    pMessage.Append(0f);                 // motion
+                    pMessage.Append((float)pContact.Size.X);   // height
+                    pMessage.Append((float)pContact.Size.Y);   // width
+
+                    // Append it to the bundle.
+                    pBundle.Append(pMessage);
+
+                    // Append the alive message for this contact to tbe bundle.
+                    pMessageAlive.Append((int)pContact.ID);
+                }
+
+                // Save the alive message.
+                pBundle.Append(pMessageAlive);
+
+                // Send the message off.
+                this.pUDPWriter.Send(pBundle);
+            }
         }
 
         /// <summary>
@@ -288,6 +327,50 @@ namespace WiiTUIO
 
 
         #region Create and Die
+
+        /// <summary>
+        /// Create the link to the Windows 7 HID driver.
+        /// </summary>
+        /// <returns></returns>
+        private bool connectWindowsTouch()
+        {
+            try
+            {
+                // Close any open connections.
+                disconnectWindowsTouch();
+
+                // Reconnect with the new API.
+                this.pTouchDevice = new ProviderHandler();
+                return true;
+            }
+            catch (Exception pError)
+            {
+                // Tear down.
+                try
+                {
+                    this.disconnectWindowsTouch();
+                }
+                catch { }
+
+                // Report the error.
+                MessageBox.Show(pError.Message, "WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Error);
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// Destroy the link to the Windows 7 HID driver.
+        /// </summary>
+        /// <returns></returns>
+        private void disconnectWindowsTouch()
+        {
+            // Remove any provider links.
+            //if (this.pTouchDevice != null)
+            //    this.pTouchDevice.Provider = null;
+            this.pTouchDevice = null;
+        }
+
+        #region UDP TUIO
         /// <summary>
         /// Connect the UDP transmitter using the port and IP specified above.
         /// </summary>
@@ -330,7 +413,9 @@ namespace WiiTUIO
                 pUDPWriter.Close();
             pUDPWriter = null;
         }
+        #endregion
 
+        #region WiiProvider
         /// <summary>
         /// Try to create the WiiProvider (this involves connecting to the Wiimote).
         /// </summary>
@@ -370,7 +455,9 @@ namespace WiiTUIO
                 this.pWiiProvider.stop();
             this.pWiiProvider = null;
         }
+        #endregion
 
+        #region Form Stuff
         /// <summary>
         /// Raises the <see cref="E:System.Windows.Window.SourceInitialized"/> event.
         /// </summary>
@@ -401,7 +488,9 @@ namespace WiiTUIO
             base.OnClosing(e);
         }
         #endregion
+        #endregion
 
+        #region Persistent Calibration Data
         /// <summary>
         /// Creates and saves a file which contains the calibration data.
         /// </summary>
@@ -445,8 +534,10 @@ namespace WiiTUIO
                 return null;
             }
         }
+        #endregion
     }
 
+    #region Persistent Calibration Data Serialisation Helper
     /// <summary>
     /// Wrapper class for persistent calibration data.
     /// This classes is required for saving data and is also returned from a load.
@@ -477,5 +568,5 @@ namespace WiiTUIO
             this.TimeStamp = DateTime.Now;
         }
     }
-
+    #endregion
 }
