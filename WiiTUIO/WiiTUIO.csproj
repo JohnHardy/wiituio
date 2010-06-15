@@ -37,6 +37,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="HIDLibrary, Version=2.1.0.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\HIDLibrary.dll</HintPath>
+    </Reference>
     <Reference Include="System" />
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -128,6 +132,8 @@
     <Compile Include="WiiProvider\Warper.cs" />
     <Compile Include="WiiProvider\WiiContact.cs" />
     <Compile Include="WiiProvider\WiiProvider.cs" />
+    <Compile Include="WinTouch\HumanInterfaceDevice.cs" />
+    <Compile Include="WinTouch\ProviderHandler.cs" />
     <EmbeddedResource Include="Properties\Resources.resx">
       <Generator>ResXFileCodeGenerator</Generator>
       <LastGenOutput>Resources.Designer.cs</LastGenOutput>
