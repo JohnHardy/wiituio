@@ -6,6 +6,12 @@ using System.Collections.Generic;
 
 using WiiTUIO.Provider;
 
+/*
+ * This code is based on code in the MulitTouch.Driver.Logic namespace provided with the MultiTouchVista project.
+ * http://multitouchvista.codeplex.com/
+ * License: http://multitouchvista.codeplex.com/license
+ */
+
 namespace WiiTUIO.WinTouch
 {
     /// <summary>
