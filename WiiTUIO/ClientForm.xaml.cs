@@ -100,7 +100,7 @@ namespace WiiTUIO
                 this.pCalibrationWindow.Show();
 
                 // Event handler for the finish calibration.
-                this.pCalibrationWindow.CalibrationCanvas.OnCalibrationFinished += new Action(CalibrationCanvas_OnCalibrationFinished);
+                this.pCalibrationWindow.CalibrationCanvas.OnCalibrationFinished += new Action<WiiProvider.CalibrationRectangle, WiiProvider.CalibrationRectangle, Vector>(CalibrationCanvas_OnCalibrationFinished);
 
                 // Begin the calibration.
                 this.pCalibrationWindow.CalibrationCanvas.beginCalibration(this.pWiiProvider);
@@ -114,8 +114,15 @@ namespace WiiTUIO
         /// <summary>
         /// This is called when calibration is finished.
         /// </summary>
-        private void CalibrationCanvas_OnCalibrationFinished()
+        private void CalibrationCanvas_OnCalibrationFinished(WiiProvider.CalibrationRectangle pSource, WiiProvider.CalibrationRectangle pDestination, Vector vScreenSize)
         {
+            // Persist the calibration data
+            if (!PersistentCalibration.savePersistentCalibration("./Calibration.dat", new PersistentCalibrationData(pSource, pDestination, vScreenSize)))
+            {
+                // Error - Failed to save calibration data
+                MessageBox.Show("Failed to save calibration data", "WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+
             // Close the calibration window.
             if (pCalibrationWindow != null)
             {

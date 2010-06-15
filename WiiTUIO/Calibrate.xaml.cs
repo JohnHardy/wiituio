@@ -51,7 +51,7 @@ namespace WiiTUIO
         /// <summary>
         /// An event which is raised once calibration is finished.
         /// </summary>
-        public event Action OnCalibrationFinished;
+        public event Action<WiiProvider.CalibrationRectangle, WiiProvider.CalibrationRectangle, Vector> OnCalibrationFinished;
 
         /// <summary>
         /// A boolean which we can use to figure out if we are calibrating or not.
@@ -176,7 +176,8 @@ namespace WiiTUIO
             pWiiProvider.TransformResults = true;
 
             // Feed that data into the provider.
-            this.pWiiProvider.setCalibrationData(pSourceRectangle, pDestinationRectangle, new Vector(this.ActualWidth, this.ActualHeight));
+            Vector vScreenSize = new Vector(this.ActualWidth, this.ActualHeight);
+            this.pWiiProvider.setCalibrationData(pSourceRectangle, pDestinationRectangle, vScreenSize);
 
             // Detach the event handler.
             this.pWiiProvider.OnNewFrame -= pEventHandler;
@@ -199,7 +200,7 @@ namespace WiiTUIO
 
                 // Raise the event.
                 if (OnCalibrationFinished != null)
-                    OnCalibrationFinished();
+                    OnCalibrationFinished(pSourceRectangle, pDestinationRectangle, vScreenSize);
             });
         }
 
