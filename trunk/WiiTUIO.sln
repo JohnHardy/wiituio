@@ -1,6 +1,6 @@
 ﻿
-Microsoft Visual Studio Solution File, Format Version 10.00
-# Visual C# Express 2008
+Microsoft Visual Studio Solution File, Format Version 11.00
+# Visual C# Express 2010
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "WiiTUIO", "WiiTUIO\WiiTUIO.csproj", "{87CC8302-A614-490E-9100-1059AF5FE8FC}"
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "OSC.NET", "WiiTUIO\OSC.NET\OSC.NET.csproj", "{14BD1D44-261D-4FC2-A7DD-A3CDA413D790}"

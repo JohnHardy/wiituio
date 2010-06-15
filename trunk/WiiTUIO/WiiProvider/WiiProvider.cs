@@ -172,9 +172,18 @@ namespace WiiTUIO.Provider
             this.InputClassifier.OnUpdate += new SpatioTemporalClassifier.TrackerEventHandler(handleInputClassifier_OnUpdate);
             this.InputClassifier.OnEnd += new SpatioTemporalClassifier.TrackerEventHandler(handleInputClassifier_OnEnd);
 
-            // Default source and destination rectangles.
+            // Get source and destination rectangles.
             this.pWarper = new Warper();
-            this.setCalibrationData(new CalibrationRectangle(), new CalibrationRectangle(), new Vector(1.0, 1.0));
+            PersistentCalibrationData oData = PersistentCalibration.loadPersistentCalibration("./Calibration.dat");
+            if (oData == null)
+            {
+                // Failed to load calibration data - setting default values
+                this.setCalibrationData(new CalibrationRectangle(), new CalibrationRectangle(), new Vector(1.0, 1.0));
+            }
+            else
+            {
+                this.setCalibrationData(oData.Source, oData.Destination, oData.ScreenSize);
+            }
 
             // Enable the calibration.
             this.TransformResults = true;
