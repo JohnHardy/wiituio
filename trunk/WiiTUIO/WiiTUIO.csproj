@@ -45,6 +45,8 @@
     <Reference Include="System.Core">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
     </Reference>
+    <Reference Include="System.Drawing" />
+    <Reference Include="System.Windows.Forms" />
     <Reference Include="System.Xaml" />
     <Reference Include="System.Xml.Linq">
       <RequiredTargetFramework>3.5</RequiredTargetFramework>
@@ -91,10 +93,8 @@
       <SubType>Designer</SubType>
     </Page>
     <Page Include="ClientForm.xaml">
-      <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
-      <SubType>Designer</SubType>
     </Page>
     <Compile Include="App.xaml.cs">
       <DependentUpon>App.xaml</DependentUpon>
@@ -102,8 +102,11 @@
     </Compile>
     <Compile Include="ClientForm.xaml.cs">
       <DependentUpon>ClientForm.xaml</DependentUpon>
-      <SubType>Code</SubType>
     </Compile>
+    <Page Include="Test_TrayIcon.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Calibrate.xaml.cs">
@@ -125,6 +128,9 @@
       <AutoGen>True</AutoGen>
       <DependentUpon>Settings.settings</DependentUpon>
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
+    </Compile>
+    <Compile Include="Test_TrayIcon.xaml.cs">
+      <DependentUpon>Test_TrayIcon.xaml</DependentUpon>
     </Compile>
     <Compile Include="WiiProvider\ContactType.cs" />
     <Compile Include="WiiProvider\FrameEventArgs.cs" />
@@ -148,10 +154,17 @@
     <Resource Include="Lancaster.png" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\NotifyIconWpf\NotifyIconWpf.csproj">
+      <Project>{7AC63864-7638-41C4-969C-D3197EF2BED9}</Project>
+      <Name>NotifyIconWpf</Name>
+    </ProjectReference>
     <ProjectReference Include="OSC.NET\OSC.NET.csproj">
       <Project>{14BD1D44-261D-4FC2-A7DD-A3CDA413D790}</Project>
       <Name>OSC.NET</Name>
     </ProjectReference>
+  </ItemGroup>
+  <ItemGroup>
+    <Resource Include="icon.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
