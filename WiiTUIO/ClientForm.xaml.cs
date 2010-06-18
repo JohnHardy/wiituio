@@ -145,8 +145,8 @@ namespace WiiTUIO
         /// <param name="e"></param>
         private void btnAbout_Click(object sender, RoutedEventArgs e)
         {
-            String sMessage = "WiiTUIO was written by John Hardy of the HighWire department at Lancaster University.";
-            sMessage += "\nYou can contact him at: hardyj2@unix.lancs.ac.uk";
+            String sMessage = "WiiTUIO was written by John Hardy & Christopher Bull of the HighWire Programme at Lancaster University.";
+            sMessage += "\nYou can contact us at: hardyj2@unix.lancs.ac.uk & c.bull@lancaster.ac.uk";
             sMessage += "\n";
             sMessage += "\nCredits:";
             sMessage += "\n\tJohnny Chung Lee: http://johnnylee.net/projects/wii/";
