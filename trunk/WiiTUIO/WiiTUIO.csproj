@@ -37,6 +37,10 @@
     <WarningLevel>4</WarningLevel>
   </PropertyGroup>
   <ItemGroup>
+    <Reference Include="Hardcodet.Wpf.TaskbarNotification, Version=1.0.4.0, Culture=neutral, processorArchitecture=MSIL">
+      <SpecificVersion>False</SpecificVersion>
+      <HintPath>.\Hardcodet.Wpf.TaskbarNotification.dll</HintPath>
+    </Reference>
     <Reference Include="HIDLibrary, Version=2.1.0.0, Culture=neutral, processorArchitecture=MSIL">
       <SpecificVersion>False</SpecificVersion>
       <HintPath>.\HIDLibrary.dll</HintPath>
@@ -154,10 +158,6 @@
     <Resource Include="Lancaster.png" />
   </ItemGroup>
   <ItemGroup>
-    <ProjectReference Include="..\NotifyIconWpf\NotifyIconWpf.csproj">
-      <Project>{7AC63864-7638-41C4-969C-D3197EF2BED9}</Project>
-      <Name>NotifyIconWpf</Name>
-    </ProjectReference>
     <ProjectReference Include="OSC.NET\OSC.NET.csproj">
       <Project>{14BD1D44-261D-4FC2-A7DD-A3CDA413D790}</Project>
       <Name>OSC.NET</Name>
