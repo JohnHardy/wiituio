@@ -10,6 +10,7 @@ using System.Windows.Data;
 using System.Windows.Documents;
 using System.Windows.Input;
 using System.Windows.Media;
+using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
@@ -23,7 +24,7 @@ namespace WiiTUIO
     /// <summary>
     /// Interaction logic for Window1.xaml
     /// </summary>
-    public partial class ClientForm : Window
+    public partial class ClientForm : UserControl
     {
         /// <summary>
         /// A reference to the WiiProvider we want to use to get/forward input.
@@ -149,11 +150,20 @@ namespace WiiTUIO
             sMessage += "\nYou can contact us at: hardyj2@unix.lancs.ac.uk & c.bull@lancaster.ac.uk";
             sMessage += "\n";
             sMessage += "\nCredits:";
-            sMessage += "\n\tJohnny Chung Lee: http://johnnylee.net/projects/wii/";
-            sMessage += "\n\tBrian Peek: http://www.brianpeek.com/";
-            sMessage += "\n\tTUIO Project: http://www.tuio.org";
-            sMessage += "\n\tOSC.NET Library: http://luvtechno.net/";
-            MessageBox.Show(sMessage, "About WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Information);
+            sMessage += "\n  Johnny Chung Lee: http://johnnylee.net/projects/wii/";
+            sMessage += "\n  Brian Peek: http://www.brianpeek.com/";
+            sMessage += "\n  TUIO Project: http://www.tuio.org";
+            sMessage += "\n  OSC.NET Library: http://luvtechno.net/";
+            TextBlock pMessage = new TextBlock();
+            pMessage.Text = sMessage;
+            pMessage.TextWrapping = TextWrapping.Wrap;
+            pMessage.VerticalAlignment = System.Windows.VerticalAlignment.Center;
+            pMessage.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
+            pMessage.FontSize = 12.0;
+            pMessage.FontWeight = FontWeights.Bold;
+            pMessage.Foreground = new SolidColorBrush(Colors.White);
+            showMessage(pMessage, MessageType.Info);
+            //MessageBox.Show(sMessage, "About WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Information);
         }
 
         /// <summary>
@@ -325,6 +335,101 @@ namespace WiiTUIO
             }), null);
         }
 
+        enum MessageType { Info, Error };
+
+        private void showMessage(string sMessage, MessageType eType)
+        {
+            TextBlock pMessage = new TextBlock();
+            pMessage.Text = sMessage;
+            pMessage.TextWrapping = TextWrapping.Wrap;
+            pMessage.VerticalAlignment = System.Windows.VerticalAlignment.Center;
+            pMessage.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
+            pMessage.FontSize = 16.0;
+            pMessage.FontWeight = FontWeights.Bold;
+            pMessage.Foreground = new SolidColorBrush(Colors.White);
+            showMessage(pMessage, 750.0, eType);
+        }
+
+        private void showMessage(UIElement pMessage, MessageType eType)
+        {
+            showMessage(pMessage, 750.0, eType);
+        }
+
+        private void showMessage(UIElement pElement, double fTimeout, MessageType eType)
+        {
+            // Show (and possibly initialise) the error message overlay
+            brdOverlay.Height = this.ActualHeight - 8;
+            brdOverlay.Width = this.ActualWidth - 8;
+            brdOverlay.Opacity = 0.0;
+            brdOverlay.Visibility = System.Windows.Visibility.Visible;
+            switch (eType)
+            {
+                case MessageType.Error:
+                    brdOverlay.Background = new SolidColorBrush(Color.FromArgb(192, 255, 0, 0));
+                    break;
+                case MessageType.Info:
+                    brdOverlay.Background = new SolidColorBrush(Color.FromArgb(192, 0, 0, 255));
+                    break;
+            }
+
+            // Set the message
+            brdOverlay.Child = pElement;
+
+            // Fade in and out.
+            messageFadeIn(fTimeout, false);
+        }
+
+        private void messageFadeIn(double fTimeout, bool bFadeOut)
+        {
+            // Now fade it in with an animation.
+            DoubleAnimation pAnimation = createDoubleAnimation(1.0, fTimeout, false);
+            pAnimation.Completed += delegate(object sender, EventArgs pEvent)
+            {
+                if (bFadeOut)
+                    this.messageFadeOut(fTimeout);
+            };
+            pAnimation.Freeze();
+            brdOverlay.BeginAnimation(Canvas.OpacityProperty, pAnimation, HandoffBehavior.Compose);
+
+        }
+        private void messageFadeOut(double fTimeout)
+        {
+            // Now fade it in with an animation.
+            DoubleAnimation pAnimation = createDoubleAnimation(0.0, fTimeout, false);
+            pAnimation.Completed += delegate(object sender, EventArgs pEvent)
+            {
+                // We are now faded out so make us invisible again.
+                brdOverlay.Visibility = Visibility.Hidden;
+            };
+            pAnimation.Freeze();
+            brdOverlay.BeginAnimation(Canvas.OpacityProperty, pAnimation, HandoffBehavior.Compose);
+        }
+
+        #region Animation Helpers
+        /**
+         * @brief Helper method to create a double animation.
+         * @param fNew The new value we want to move too.
+         * @param fTime The time we want to allow in ms.
+         * @param bFreeze Do we want to freeze this animation (so we can't modify it).
+         */
+        private static DoubleAnimation createDoubleAnimation(double fNew, double fTime, bool bFreeze)
+        {
+            // Create the animation.
+            DoubleAnimation pAction = new DoubleAnimation(fNew, new Duration(TimeSpan.FromMilliseconds(fTime)))
+            {
+                // Specify settings.
+                AccelerationRatio = 0.1,
+                DecelerationRatio = 0.9,
+                FillBehavior = FillBehavior.HoldEnd
+            };
+
+            // Pause the action before starting it and then return it.
+            if (bFreeze)
+                pAction.Freeze();
+            return pAction;
+        }
+        #endregion
+
 
         #region Create and Die
 
@@ -353,7 +458,8 @@ namespace WiiTUIO
                 catch { }
 
                 // Report the error.
-                MessageBox.Show(pError.Message, "WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Error);
+                showMessage(pError.Message, MessageType.Error);
+                //MessageBox.Show(pError.Message, "WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }
         }
@@ -397,7 +503,8 @@ namespace WiiTUIO
                 catch { }
 
                 // Report the error.
-                MessageBox.Show(pError.Message, "WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Error);
+                showMessage(pError.Message, MessageType.Error);
+                //MessageBox.Show(pError.Message, "WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }
         }
@@ -440,7 +547,8 @@ namespace WiiTUIO
                 catch { }
 
                 // Report the error.
-                MessageBox.Show(pError.Message, "WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Error);
+                showMessage(pError.Message, MessageType.Error);
+                //MessageBox.Show(pError.Message, "WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }
         }
@@ -459,10 +567,10 @@ namespace WiiTUIO
 
         #region Form Stuff
         /// <summary>
-        /// Raises the <see cref="E:System.Windows.Window.SourceInitialized"/> event.
+        /// Raises the <see cref="E:System.Windows.FrameworkElement.Initialized"/> event.
         /// </summary>
         /// <param name="e">An <see cref="T:System.EventArgs"/> that contains the event data.</param>
-        protected override void OnSourceInitialized(EventArgs e)
+        protected override void OnInitialized(EventArgs e)
         {
             // Create the providers.
             //this.createProviders();
@@ -472,20 +580,13 @@ namespace WiiTUIO
             txtPort.TextChanged += txtPort_TextChanged;
 
             // Call the base class.
-            base.OnSourceInitialized(e);
+            base.OnInitialized(e);
         }
 
-        /// <summary>
-        /// Raises the <see cref="E:System.Windows.Window.OnClosing"/> event.
-        /// </summary>
-        /// <param name="e">An <see cref="T:System.ComponentModel.CancelEventArgs"/> that contains the event data.</param>
-        protected override void OnClosing(System.ComponentModel.CancelEventArgs e)
+        ~ClientForm()
         {
             // Disconnect the providers.
             this.disconnectProviders();
-
-            // Call the base class.
-            base.OnClosing(e);
         }
         #endregion
         #endregion
@@ -539,6 +640,11 @@ namespace WiiTUIO
         private void btnAboutWinTouch_Click(object sender, RoutedEventArgs e)
         {
 
+        }
+
+        private void brdOverlay_MouseDown(object sender, MouseButtonEventArgs e)
+        {
+            messageFadeOut(750.0);
         }
     }
 
