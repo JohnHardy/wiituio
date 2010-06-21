@@ -230,7 +230,7 @@ namespace WiiTUIO.Provider
             if (!this.initialiseWiimoteConnection(out pError))
             {
                 //pDeviceMutex.ReleaseMutex();
-                throw new Exception("Could not establish connection to Wiimote:" + pError.Message, pError);
+                throw new Exception("Could not establish connection to Wiimote: " + pError.Message, pError);
             }
 
             // Clear the trackers.
