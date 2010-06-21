@@ -646,6 +646,11 @@ namespace WiiTUIO
         {
             messageFadeOut(750.0);
         }
+
+        private void btnAboutTUIO_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
     }
 
     #region Persistent Calibration Data Serialisation Helper

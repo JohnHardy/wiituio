@@ -16,42 +16,48 @@
         <Grid>
             <StackPanel>
                 <GroupBox Header="TUIO Settings" Margin="10" Padding="10,0,10,10">
-                    <Grid>
-                        <Grid.RowDefinitions>
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                            <RowDefinition Height="Auto" />
-                        </Grid.RowDefinitions>
-                        <Grid.ColumnDefinitions>
-                            <ColumnDefinition Width="Auto" />
-                            <ColumnDefinition Width="Auto" />
-                        </Grid.ColumnDefinitions>
-                        <Label Grid.Row="0" Grid.Column="0">IP Address</Label>
-                        <Label Grid.Row="0" Grid.Column="1">TUIO Port</Label>
-                        <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0">
-                            <TextBox Name="txtIPAddress" Width="150">127.0.0.1</TextBox>
-                            <Label>:</Label>
-                        </StackPanel>
-                        <TextBox Name="txtPort" Grid.Row="1" Grid.Column="1">3333</TextBox>
-                        <StackPanel Orientation="Horizontal" Grid.Row="2" Grid.Column="0">
-                            <Label VerticalAlignment="Bottom" Margin="-3,0,0,-3">State:</Label>
-                            <Label Name="lblState" VerticalAlignment="Bottom" Margin="-3,0,0,-3" Foreground="Red">Disconnected</Label>
-                        </StackPanel>
-                        <Button Name="btnConnect" Click="btnConnect_Click" Grid.Row="2" Grid.Column="1" Margin="0,5,0,0" Height="25" Width="80">Connect</Button>
-                    </Grid>
+                    <StackPanel>
+                        <Grid>
+                            <Grid.RowDefinitions>
+                                <RowDefinition />
+                                <RowDefinition />
+                                <RowDefinition />
+                            </Grid.RowDefinitions>
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition />
+                                <ColumnDefinition />
+                            </Grid.ColumnDefinitions>
+                            <Label Grid.Row="0" Grid.Column="0">IP Address</Label>
+                            <Label Grid.Row="0" Grid.Column="1">TUIO Port</Label>
+                            <StackPanel Orientation="Horizontal" Grid.Row="1" Grid.Column="0">
+                                <TextBox Name="txtIPAddress" Width="100">127.0.0.1</TextBox>
+                                <Label>:</Label>
+                            </StackPanel>
+                            <TextBox Name="txtPort" Grid.Row="1" Grid.Column="1">3333</TextBox>
+                        </Grid>
+                        <DockPanel Margin="0,5,0,0">
+                            <CheckBox Name="chkTUIOEnabled" Content="TUIO Multi Touch Events" VerticalAlignment="Center" />
+                            <Button Name="btnAboutTUIO" Click="btnAboutTUIO_Click" HorizontalAlignment="Right" Padding="5,0">?</Button>
+                        </DockPanel>
+                    </StackPanel>
                 </GroupBox>
                 <GroupBox Header="Windows Touch Settings" Margin="10,0" Padding="10">
                     <DockPanel>
-                        <CheckBox Name="chkWin7Enabled" Content="Windows 7 Multi Touch Events" VerticalAlignment="Center" />
-                        <Button Name="btnAboutWinTouch" Click="btnAboutWinTouch_Click" HorizontalAlignment="Right" Padding="5,0">?</Button>
+                        <CheckBox Name="chkWin7Enabled" Content="Win 7 Multi Touch Events" VerticalAlignment="Center" />
+                        <Button Name="btnAboutWinTouch" Click="btnAboutWinTouch_Click" HorizontalAlignment="Right" Margin="5,0,0,0" Padding="5,0">?</Button>
                     </DockPanel>
                 </GroupBox>
                 <GroupBox Header="WiiMote" Margin="10,0" Padding="10">
-                    <DockPanel>
-                        <ProgressBar Name="barBattery" Maximum="200" Width="130" Height="40" Canvas.ZIndex="1" />
-                        <Rectangle Fill="LightGray" RadiusX="3" RadiusY="3" Stroke="DarkGray" Width="15" Height="24" Margin="-8,0,0,0" />
-                        <Button Name="btnCalibrate" Click="btnCalibrate_Click" HorizontalAlignment="Right" Margin="15,5,0,5" Width="90" Height="28">Calibrate</Button>
-                    </DockPanel>
+                    <StackPanel>
+                        <DockPanel>
+                            <Button Name="btnConnect" Click="btnConnect_Click" Margin="0,0,0,10" Width="60">Connect</Button>
+                            <Button Name="btnCalibrate" Click="btnCalibrate_Click" HorizontalAlignment="Right" Margin="0,0,0,10" Width="60">Calibrate</Button>
+                        </DockPanel>
+                        <DockPanel>
+                            <ProgressBar Name="barBattery" Maximum="200" Width="170" Height="40" Canvas.ZIndex="1" />
+                            <Rectangle Fill="LightGray" RadiusX="3" RadiusY="3" Stroke="DarkGray" Width="15" Height="24" Margin="-10,0,0,0" />
+                        </DockPanel>
+                    </StackPanel>
                 </GroupBox>
                 <DockPanel Margin="10">
                     <Button Name="btnAbout" Click="btnAbout_Click" HorizontalAlignment="Right" Padding="10,3">About</Button>
@@ -59,7 +65,6 @@
             </StackPanel>
             <Canvas>
                 <Border Name="brdOverlay" MouseDown="brdOverlay_MouseDown" CornerRadius="7" Visibility="Hidden">
-                    
                 </Border>
             </Canvas>
         </Grid>
