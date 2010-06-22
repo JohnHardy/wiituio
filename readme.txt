@@ -5,7 +5,7 @@ WiiTUIO v2
 John Hardy & Christopher Bull
 hardyj2{at}unix.lancs.ac.uk & c.bull{at}lancaster.ac.uk
 HighWire Programme, Lancaster University
-14-06-2010
+22-06-2010
 
 
 INTRODUCTION
@@ -39,5 +39,6 @@ MultiTouchVista:	http://multitouchvista.codeplex.com/
 OSC.NET Library:	http://luvtechno.net/
 WiimoteLib 1.7:		http://wiimotelib.codeplex.com/
 HIDLibrary:		http://hidlibrary.codeplex.com/
+WPFNotifyIcon:		http://www.hardcodet.net/projects/wpf-notifyicon
 
 Please respect each invdivudal project's software license.

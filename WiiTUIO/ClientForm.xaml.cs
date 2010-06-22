@@ -133,7 +133,7 @@ namespace WiiTUIO
                 }
 
                 // Flush the contacts?
-                // this.pTouchDevice.sendContacts();
+                this.pTouchDevice.sendContacts();
             }
 
 
