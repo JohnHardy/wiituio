@@ -36,22 +36,22 @@
                             <TextBox Name="txtPort" Grid.Row="1" Grid.Column="1">3333</TextBox>
                         </Grid>
                         <DockPanel Margin="0,5,0,0">
-                            <CheckBox Name="chkTUIOEnabled" Content="TUIO Multi Touch Events" VerticalAlignment="Center" />
+                            <CheckBox Name="chkTUIOEnabled" Content="TUIO Multi Touch Events" Checked="chkTUIOEnabled_Checked" Unchecked="chkTUIOEnabled_Unchecked" VerticalAlignment="Center" />
                             <Button Name="btnAboutTUIO" Click="btnAboutTUIO_Click" HorizontalAlignment="Right" Padding="5,0">?</Button>
                         </DockPanel>
                     </StackPanel>
                 </GroupBox>
                 <GroupBox Header="Windows Touch Settings" Margin="10,0" Padding="10">
                     <DockPanel>
-                        <CheckBox Name="chkWin7Enabled" Content="Win 7 Multi Touch Events" VerticalAlignment="Center" />
+                        <CheckBox Name="chkWin7Enabled" Content="Win 7 Multi Touch Events" Checked="chkWin7Enabled_Checked" Unchecked="chkWin7Enabled_Unchecked" VerticalAlignment="Center" />
                         <Button Name="btnAboutWinTouch" Click="btnAboutWinTouch_Click" HorizontalAlignment="Right" Margin="5,0,0,0" Padding="5,0">?</Button>
                     </DockPanel>
                 </GroupBox>
                 <GroupBox Header="WiiMote" Margin="10,0" Padding="10">
                     <StackPanel>
                         <DockPanel>
-                            <Button Name="btnConnect" Click="btnConnect_Click" Margin="0,0,0,10" Width="60">Connect</Button>
-                            <Button Name="btnCalibrate" Click="btnCalibrate_Click" HorizontalAlignment="Right" Margin="0,0,0,10" Width="60">Calibrate</Button>
+                            <Button Name="btnConnect" Click="btnConnect_Click" Margin="0,0,0,10" Width="75">Connect</Button>
+                            <Button Name="btnCalibrate" Click="btnCalibrate_Click" IsEnabled="False" HorizontalAlignment="Right" Margin="0,0,0,10" Width="75">Calibrate</Button>
                         </DockPanel>
                         <DockPanel>
                             <ProgressBar Name="barBattery" Maximum="200" Width="170" Height="40" Canvas.ZIndex="1" />
@@ -60,7 +60,8 @@
                     </StackPanel>
                 </GroupBox>
                 <DockPanel Margin="10">
-                    <Button Name="btnAbout" Click="btnAbout_Click" HorizontalAlignment="Right" Padding="10,3">About</Button>
+                    <Button Name="btnExit" Click="btnExit_Click" Margin="20,0" Padding="10,0" Width="60">Exit</Button>
+                    <Button Name="btnAbout" Click="btnAbout_Click" HorizontalAlignment="Right" Margin="20,0" Padding="10,0" Width="60">About</Button>
                 </DockPanel>
             </StackPanel>
             <Canvas>

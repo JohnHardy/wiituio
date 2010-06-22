@@ -14,10 +14,12 @@ using System.Windows.Media.Animation;
 using System.Windows.Media.Imaging;
 using System.Windows.Navigation;
 using System.Windows.Shapes;
+using System.Threading;
 
+using Hardcodet.Wpf.TaskbarNotification;
+using OSC.NET;
 using WiiTUIO.WinTouch;
 using WiiTUIO.Provider;
-using OSC.NET;
 
 namespace WiiTUIO
 {
@@ -56,68 +58,20 @@ namespace WiiTUIO
         /// </summary>
         private bool bReconnect = false;
 
+        private bool bWindowsTouch = false;
+        private bool bTUIOTouch = false;
+
         /// <summary>
         /// Construct a new Window.
         /// </summary>
         public ClientForm()
         {
+            // Load from the XAML.
             InitializeComponent();
-        }
 
-        /// <summary>
-        /// Called when the IP Address has been changed.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void txtIPAddress_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            // Flag that we want to reconnect.
-            bReconnect = true;
-            btnConnect.Content = "Reconnect";
-        }
-
-        /// <summary>
-        /// Called when the port has been changed.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void txtPort_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            // Flag that we want to reconnect.
-            bReconnect = true;
-            btnConnect.Content = "Reconnect";
-        }
-
-        /// <summary>
-        /// Called when the calibrate button has been clicked.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void btnCalibrate_Click(object sender, RoutedEventArgs e)
-        {
-            // Create a calibrate form.
-            if (pCalibrationWindow != null)
-                pCalibrationWindow.Close();
-
-            try
-            {
-                // Create a new calibration window.
-                this.pCalibrationWindow = new CalibrationWindow();
-                //this.pCalibrationWindow.Topmost = true;
-                this.pCalibrationWindow.WindowStyle = WindowStyle.None;
-                this.pCalibrationWindow.WindowState = WindowState.Maximized;
-                this.pCalibrationWindow.Show();
-
-                // Event handler for the finish calibration.
-                this.pCalibrationWindow.CalibrationCanvas.OnCalibrationFinished += new Action<WiiProvider.CalibrationRectangle, WiiProvider.CalibrationRectangle, Vector>(CalibrationCanvas_OnCalibrationFinished);
-
-                // Begin the calibration.
-                this.pCalibrationWindow.CalibrationCanvas.beginCalibration(this.pWiiProvider);
-            }
-            catch (Exception pError)
-            {
-                MessageBox.Show(pError.Message, "WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Error);
-            }
+            // Create a calibration window and hide it.
+            this.pCalibrationWindow = new CalibrationWindow();
+            this.pCalibrationWindow.Visibility = Visibility.Hidden;
         }
 
         /// <summary>
@@ -135,91 +89,11 @@ namespace WiiTUIO
             // Close the calibration window.
             if (pCalibrationWindow != null)
             {
-                pCalibrationWindow.Close();
+                pCalibrationWindow.Visibility = System.Windows.Visibility.Hidden;
             }
         }
 
-        /// <summary>
-        /// Called when the 'About' button is clicked.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void btnAbout_Click(object sender, RoutedEventArgs e)
-        {
-            String sMessage = "WiiTUIO was written by John Hardy & Christopher Bull of the HighWire Programme at Lancaster University.";
-            sMessage += "\nYou can contact us at: hardyj2@unix.lancs.ac.uk & c.bull@lancaster.ac.uk";
-            sMessage += "\n";
-            sMessage += "\nCredits:";
-            sMessage += "\n  Johnny Chung Lee: http://johnnylee.net/projects/wii/";
-            sMessage += "\n  Brian Peek: http://www.brianpeek.com/";
-            sMessage += "\n  TUIO Project: http://www.tuio.org";
-            sMessage += "\n  OSC.NET Library: http://luvtechno.net/";
-            TextBlock pMessage = new TextBlock();
-            pMessage.Text = sMessage;
-            pMessage.TextWrapping = TextWrapping.Wrap;
-            pMessage.VerticalAlignment = System.Windows.VerticalAlignment.Center;
-            pMessage.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
-            pMessage.FontSize = 12.0;
-            pMessage.FontWeight = FontWeights.Bold;
-            pMessage.Foreground = new SolidColorBrush(Colors.White);
-            showMessage(pMessage, MessageType.Info);
-            //MessageBox.Show(sMessage, "About WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Information);
-        }
-
-        /// <summary>
-        /// Called when the 'Connect' or 'Disconnect' button is clicked.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void btnConnect_Click(object sender, RoutedEventArgs e)
-        {
-            // If we are in reconnect mode..
-            if (bReconnect)
-            {
-                disconnectProviders();
-                disconnectTransmitter();
-                disconnectWindowsTouch();
-                btnConnect.Content = "Connect";
-                bConnected = false;
-                bReconnect = false;
-            }
-
-            // If we have been asked to connect.
-            if (!bConnected)
-            {
-                // Connect.
-                if (this.createProviders() && this.connectTransmitter() && this.connectWindowsTouch())
-                {
-                    // Update the button to say we are connected.
-                    btnConnect.Content = "Disconnect";
-                    bConnected = true;
-
-                    // Load calibration data.
-                    PersistentCalibrationData oData = loadPersistentCalibration("./Calibration.dat");
-                    if (oData != null)
-                        this.pWiiProvider.setCalibrationData(oData.Source, oData.Destination, oData.ScreenSize);
-                }
-                else
-                {
-                    disconnectProviders();
-                    disconnectTransmitter();
-                    disconnectWindowsTouch();
-                    btnConnect.Content = "Connect";
-                    bConnected = false;
-                }
-            }
-
-            // Otherwise be sure I am disconnected.
-            else
-            {
-                disconnectProviders();
-                disconnectTransmitter();
-                disconnectWindowsTouch();
-                btnConnect.Content = "Connect";
-                bConnected = false;
-            }
-        }
-
+        private Mutex pCommunicationMutex = new Mutex();
         private static int iFrame = 0;
         /// <summary>
         /// Process an event frame and convert the data into a TUIO message.
@@ -227,8 +101,11 @@ namespace WiiTUIO
         /// <param name="e"></param>
         private void processEventFrame(FrameEventArgs e)
         {
+            // Obtain mutual exclusion.
+            this.pCommunicationMutex.WaitOne();
+
             // If Windows 7 events are enabled.
-            if (true)
+            if (bWindowsTouch)
             {
                 // For every contact in the list of contacts.
                 foreach (WiiContact pContact in e.Contacts)
@@ -254,7 +131,7 @@ namespace WiiTUIO
 
 
             // If TUIO events are enabled.
-            if (true)
+            if (bTUIOTouch)
             {
                 // Create an new TUIO Bundle
                 OSCBundle pBundle = new OSCBundle();
@@ -297,6 +174,9 @@ namespace WiiTUIO
                 // Send the message off.
                 this.pUDPWriter.Send(pBundle);
             }
+
+            // And release it!
+            pCommunicationMutex.ReleaseMutex();
         }
 
         /// <summary>
@@ -334,6 +214,8 @@ namespace WiiTUIO
                 this.barBattery.Value = obj;
             }), null);
         }
+
+        #region Messages - Err/Inf
 
         enum MessageType { Info, Error };
 
@@ -429,9 +311,11 @@ namespace WiiTUIO
             return pAction;
         }
         #endregion
-
-
+        #endregion
+        
         #region Create and Die
+
+        #region Windows Touch
 
         /// <summary>
         /// Create the link to the Windows 7 HID driver.
@@ -476,6 +360,8 @@ namespace WiiTUIO
             this.pTouchDevice = null;
         }
 
+        #endregion
+
         #region UDP TUIO
         /// <summary>
         /// Connect the UDP transmitter using the port and IP specified above.
@@ -504,7 +390,6 @@ namespace WiiTUIO
 
                 // Report the error.
                 showMessage(pError.Message, MessageType.Error);
-                //MessageBox.Show(pError.Message, "WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Error);
                 return false;
             }
         }
@@ -637,9 +522,38 @@ namespace WiiTUIO
         }
         #endregion
 
-        private void btnAboutWinTouch_Click(object sender, RoutedEventArgs e)
-        {
+        #region UI Events
 
+        /// <summary>
+        /// Called when the IP Address has been changed.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void txtIPAddress_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // Flag that we want to reconnect.
+            bReconnect = true;
+            if (chkTUIOEnabled.IsChecked == true)
+            {
+                chkTUIOEnabled.IsChecked = false;
+                App.TB.ShowBalloonTip("WiiTUIO", "Changes to the settings have been made.\nThe TUIO events have been disabled...", BalloonIcon.Info);
+            }
+        }
+
+        /// <summary>
+        /// Called when the port has been changed.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void txtPort_TextChanged(object sender, TextChangedEventArgs e)
+        {
+            // Flag that we want to reconnect.
+            bReconnect = true;
+            if (chkWin7Enabled.IsChecked == true)
+            {
+                chkWin7Enabled.IsChecked = false;
+                App.TB.ShowBalloonTip("WiiTUIO", "Changes to the settings have been made.\nThe TUIO events have been disabled...", BalloonIcon.Info);
+            }
         }
 
         private void brdOverlay_MouseDown(object sender, MouseButtonEventArgs e)
@@ -647,10 +561,254 @@ namespace WiiTUIO
             messageFadeOut(750.0);
         }
 
+        private void chkTUIOEnabled_Checked(object sender, RoutedEventArgs e)
+        {
+            // Acquire mutual exclusion.
+            pCommunicationMutex.WaitOne();
+
+            // Enable the TUIO touch and disconnect the provider.
+            this.disconnectTransmitter();
+            if (this.connectTransmitter())
+            {
+                bTUIOTouch = true;
+                chkTUIOEnabled.IsChecked = true;
+            }
+            else
+            {
+                bTUIOTouch = false;
+                chkTUIOEnabled.IsChecked = false;
+            }
+
+            // Release the mutex.
+            pCommunicationMutex.ReleaseMutex();
+        }
+
+        private void chkTUIOEnabled_Unchecked(object sender, RoutedEventArgs e)
+        {
+            // Acquire mutual exclusion.
+            pCommunicationMutex.WaitOne();
+
+            // Disable the TUIO touch and disconnect the provider.
+            bTUIOTouch = false;
+            this.disconnectTransmitter();
+
+            // Release the mutex.
+            pCommunicationMutex.ReleaseMutex();
+        }
+
+        private void chkWin7Enabled_Checked(object sender, RoutedEventArgs e)
+        {
+            // Acquire mutual exclusion.
+            pCommunicationMutex.WaitOne();
+
+            // Enable the windows touch and disconnect the provider.
+            this.disconnectWindowsTouch();
+            if (this.connectWindowsTouch())
+            {
+                bWindowsTouch = true;
+                chkWin7Enabled.IsChecked = true;
+            }
+            else
+            {
+                bWindowsTouch = false;
+                chkWin7Enabled.IsChecked = false;
+            }
+
+            // Release the mutex.
+            pCommunicationMutex.ReleaseMutex();
+        }
+
+        private void chkWin7Enabled_Unchecked(object sender, RoutedEventArgs e)
+        {
+            // Acquire mutual exclusion.
+            pCommunicationMutex.WaitOne();
+
+            // Disable the windows touch and disconnect the provider.
+            bWindowsTouch = false;
+            this.disconnectWindowsTouch();
+
+            // Release the mutex.
+            pCommunicationMutex.ReleaseMutex();
+        }
+
         private void btnAboutTUIO_Click(object sender, RoutedEventArgs e)
         {
 
         }
+
+        private void btnAboutWinTouch_Click(object sender, RoutedEventArgs e)
+        {
+
+        }
+
+        /// <summary>
+        /// Called when the 'Connect' or 'Disconnect' button is clicked.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnConnect_Click(object sender, RoutedEventArgs e)
+        {
+            // If we are in reconnect mode..
+            if (bReconnect)
+            {
+                disconnectProviders();
+                btnConnect.Content = "Connect";
+                btnCalibrate.IsEnabled = false;
+                btnCalibrate.Content = "Calibrate";
+                bConnected = false;
+                bReconnect = false;
+                barBattery.Value = 0;
+            }
+
+            // If we have been asked to connect.
+            if (!bConnected)
+            {
+                // Connect.
+                if (createProviders())
+                {
+                    // Update the button to say we are connected.
+                    btnConnect.Content = "Disconnect";
+                    btnCalibrate.IsEnabled = true;
+                    bConnected = true;
+
+                    // Load calibration data.
+                    PersistentCalibrationData oData = loadPersistentCalibration("./Calibration.dat");
+                    if (oData != null)
+                    {
+                        this.pWiiProvider.setCalibrationData(oData.Source, oData.Destination, oData.ScreenSize);
+                        btnCalibrate.Content = "Re-Calibrate";
+                        App.TB.ShowBalloonTip("WiiTUIO", "Calibration loaded", BalloonIcon.Info);
+                    }
+                }
+                else
+                {
+                    disconnectProviders();
+                    btnConnect.Content = "Connect";
+                    btnCalibrate.IsEnabled = false;
+                    btnCalibrate.Content = "Calibrate";
+                    bConnected = false;
+                    barBattery.Value = 0;
+                }
+            }
+
+            // Otherwise be sure I am disconnected.
+            else
+            {
+                disconnectProviders();
+                btnConnect.Content = "Connect";
+                btnCalibrate.IsEnabled = false;
+                btnCalibrate.Content = "Calibrate";
+                bConnected = false;
+                barBattery.Value = 0;
+            }
+        }
+
+        /// <summary>
+        /// Called when the calibrate button has been clicked.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnCalibrate_Click(object sender, RoutedEventArgs e)
+        {
+            try
+            {
+                // Create a new calibration window.
+                //if (pCalibrationWindow == null)
+                //    this.pCalibrationWindow = new CalibrationWindow();
+                //else
+                this.pCalibrationWindow.Visibility = System.Windows.Visibility.Visible;
+
+                //this.pCalibrationWindow.Topmost = true;
+                this.pCalibrationWindow.WindowStyle = WindowStyle.None;
+                this.pCalibrationWindow.WindowState = WindowState.Maximized;
+                this.pCalibrationWindow.Show();
+
+                // Event handler for the finish calibration.
+                this.pCalibrationWindow.CalibrationCanvas.OnCalibrationFinished += new Action<WiiProvider.CalibrationRectangle, WiiProvider.CalibrationRectangle, Vector>(CalibrationCanvas_OnCalibrationFinished);
+
+                // Begin the calibration.
+                this.pCalibrationWindow.CalibrationCanvas.beginCalibration(this.pWiiProvider);
+            }
+            catch (Exception pError)
+            {
+                MessageBox.Show(pError.Message, "WiiTUIO", MessageBoxButton.OK, MessageBoxImage.Error);
+            }
+        }
+
+        private void btnExit_Click(object sender, RoutedEventArgs e)
+        {
+            App.TB.Dispose();
+            Application.Current.Shutdown(0);
+        }
+
+        private RoutedEventHandler oLinkToBrowser = new RoutedEventHandler(delegate(object oSource, RoutedEventArgs pArgs){
+                System.Diagnostics.Process.Start((oSource as Hyperlink).NavigateUri.ToString());
+            });
+
+        /// <summary>
+        /// Called when the 'About' button is clicked.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnAbout_Click(object sender, RoutedEventArgs e)
+        {
+            TextBlock pMessage = new TextBlock();
+            pMessage.TextWrapping = TextWrapping.Wrap;
+            pMessage.VerticalAlignment = System.Windows.VerticalAlignment.Center;
+            pMessage.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
+            pMessage.FontSize = 12.0;
+            pMessage.FontWeight = FontWeights.Bold;
+            pMessage.Foreground = new SolidColorBrush(Colors.White);
+
+            Hyperlink link;
+            SolidColorBrush oLinkColour = new SolidColorBrush(Colors.GreenYellow);
+            pMessage.Inlines.Add("WiiTUIO was written by John Hardy & Christopher Bull of the HighWire Programme at Lancaster University.\n\nYou can contact us at:\n  ");
+            link = new Hyperlink();
+            link.Inlines.Add("hardyj2@unix.lancs.ac.uk");
+            link.NavigateUri = new Uri("mailto:hardyj2@unix.lancs.ac.uk");
+            link.Click += oLinkToBrowser;
+            link.Foreground = oLinkColour;
+            pMessage.Inlines.Add(link);
+            pMessage.Inlines.Add("\n  ");
+            link = new Hyperlink();
+            link.Inlines.Add("c.bull@lancaster.ac.uk");
+            link.NavigateUri = new Uri("mailto:c.bull@lancaster.ac.uk");
+            link.Click += oLinkToBrowser;
+            link.Foreground = oLinkColour;
+            pMessage.Inlines.Add(link);
+            pMessage.Inlines.Add("\n\nCredits:\n  Johnny Chung Lee:\n    ");
+            link = new Hyperlink();
+            link.Inlines.Add("http://johnnylee.net/projects/wii/");
+            link.NavigateUri = new Uri("http://johnnylee.net/projects/wii/");
+            link.Click += oLinkToBrowser;
+            link.Foreground = oLinkColour;
+            pMessage.Inlines.Add(link);
+            pMessage.Inlines.Add("\n  Brian Peek:\n    ");
+            link = new Hyperlink();
+            link.Inlines.Add("http://www.brianpeek.com/");
+            link.NavigateUri = new Uri("http://www.brianpeek.com/");
+            link.Click += oLinkToBrowser;
+            link.Foreground = oLinkColour;
+            pMessage.Inlines.Add(link);
+            pMessage.Inlines.Add("\n  TUIO Project:\n    ");
+            link = new Hyperlink();
+            link.Inlines.Add("http://www.tuio.org");
+            link.NavigateUri = new Uri("http://www.tuio.org");
+            link.Click += oLinkToBrowser;
+            link.Foreground = oLinkColour;
+            pMessage.Inlines.Add(link);
+            pMessage.Inlines.Add("\n  OSC.NET Library:\n    ");
+            link = new Hyperlink();
+            link.Inlines.Add("http://luvtechno.net/");
+            link.NavigateUri = new Uri("http://luvtechno.net/");
+            link.Click += oLinkToBrowser;
+            link.Foreground = oLinkColour;
+            pMessage.Inlines.Add(link);
+
+            showMessage(pMessage, MessageType.Info);
+        }
+
+        #endregion
     }
 
     #region Persistent Calibration Data Serialisation Helper
