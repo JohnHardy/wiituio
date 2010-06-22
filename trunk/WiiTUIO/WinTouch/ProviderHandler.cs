@@ -37,11 +37,6 @@ namespace WiiTUIO.WinTouch
         private Dictionary<int, HidContactInfo> dLastContacts = null;
 
         /// <summary>
-        /// A timer which we will use to poll events.
-        /// </summary>
-        private System.Timers.Timer pTimer;
-
-        /// <summary>
         /// A reference to a human interface device driver we want to send data too.
         /// </summary>
         private HidDevice pDevice;
@@ -75,13 +70,6 @@ namespace WiiTUIO.WinTouch
             if (this.pDevice == null)
                 throw new InvalidOperationException("Universal Software HID driver was not found. Please ensure that it is installed.");
             this.pDevice.Open(HidDevice.DeviceMode.Overlapped, HidDevice.DeviceMode.NonOverlapped);
-
-            // Create the timer to throw device updates.
-            pTimer = new System.Timers.Timer();
-            pTimer.AutoReset = false;
-            pTimer.Interval = 1000 / 133d;  // Can we change this?
-            pTimer.Elapsed += new ElapsedEventHandler(pTimer_Elapsed);
-            pTimer.Start();
         }
 
         /// <summary>
@@ -104,20 +92,6 @@ namespace WiiTUIO.WinTouch
             if (this.pDevice == null)
                 return false;
             return this.pDevice.IsOpen;
-        }
-
-        /// <summary>
-        /// This is called when the timer ticks.
-        /// </summary>
-        /// <param name="sender"></param>
-        /// <param name="e"></param>
-        private void pTimer_Elapsed(object sender, ElapsedEventArgs e)
-        {
-            // Push any contacts queued.
-            this.sendContacts();
-
-            // Restart the timer.
-            pTimer.Start();
         }
 
         /// <summary>

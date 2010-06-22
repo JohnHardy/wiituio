@@ -111,7 +111,7 @@ namespace WiiTUIO
             this.Height = (double)this.Parent.GetValue(Canvas.ActualHeightProperty);
 
             // Step into the calibration.
-            //this.movePoint(0.5, 0.5);
+            this.movePoint(0.1, 0.1);
             this.stepCalibration();
         }
 
