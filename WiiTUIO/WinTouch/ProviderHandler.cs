@@ -85,6 +85,28 @@ namespace WiiTUIO.WinTouch
         }
 
         /// <summary>
+        /// Do we have a connection to the HID device.
+        /// </summary>
+        /// <returns></returns>
+        public bool isConnected()
+        {
+            if (this.pDevice == null)
+                return false;
+            return this.pDevice.IsConnected;
+        }
+
+        /// <summary>
+        /// Do we have an open connection to the HID device.
+        /// </summary>
+        /// <returns></returns>
+        public bool isOpen()
+        {
+            if (this.pDevice == null)
+                return false;
+            return this.pDevice.IsOpen;
+        }
+
+        /// <summary>
         /// This is called when the timer ticks.
         /// </summary>
         /// <param name="sender"></param>
