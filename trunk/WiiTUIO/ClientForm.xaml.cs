@@ -58,7 +58,14 @@ namespace WiiTUIO
         /// </summary>
         private bool bReconnect = false;
 
+        /// <summary>
+        /// Are windows touch events enabled.
+        /// </summary>
         private bool bWindowsTouch = false;
+
+        /// <summary>
+        /// Are TUIO touch events enabled.
+        /// </summary>
         private bool bTUIOTouch = false;
 
         /// <summary>
@@ -699,7 +706,7 @@ namespace WiiTUIO
             pMessage.FontSize = 12.0;
             pMessage.FontWeight = FontWeights.Bold;
 
-            pMessage.Inlines.Add("This application can communicate via the UniSoftHID driver to emulate native muli-touch events in Windows 7.\n\nThe touch messages this application generates are a cut down version of the Multitouch.Driver.Logic namespace within MultiTouchVista.  Please don't ask them for support!\n\nThe UniSoftHID driver can be found bundled with 'MultiTouchVista' here: ");
+            pMessage.Inlines.Add("This application can communicate with Windows 7 via the UniSoftHID driver.  This allows it to emulate native muli-touch events in Windows 7.\n\nThe touch messages this application generates are a cut down version of the Multitouch.Driver.Logic namespace within MultiTouchVista.  Please don't ask them for support!\n\nThe UniSoftHID driver can be found bundled with 'MultiTouchVista' here: ");
             pMessage.Inlines.Add(createHyperlink("MultiTouchVista", "http://multitouchvista.codeplex.com/releases/view/28979"));
 
             showMessage(pMessage, MessageType.Info);
@@ -800,6 +807,16 @@ namespace WiiTUIO
         }
 
         /// <summary>
+        /// Called when the hide button is clicked.
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
+        private void btnHide_Click(object sender, RoutedEventArgs e)
+        {
+            //App.TB.TrayPopup.
+        }
+
+        /// <summary>
         /// Called when exit is clicked in the context menu
         /// </summary>
         /// <param name="sender"></param>
@@ -850,6 +867,8 @@ namespace WiiTUIO
         }
 
         #endregion
+
+        
     }
 
     #region Persistent Calibration Data Serialisation Helper
