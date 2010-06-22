@@ -226,9 +226,12 @@ namespace WiiTUIO
             pMessage.TextWrapping = TextWrapping.Wrap;
             pMessage.VerticalAlignment = System.Windows.VerticalAlignment.Center;
             pMessage.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
-            pMessage.FontSize = 16.0;
             pMessage.FontWeight = FontWeights.Bold;
-            pMessage.Foreground = new SolidColorBrush(Colors.White);
+            if (eType == MessageType.Error)
+            {
+                pMessage.Foreground = new SolidColorBrush(Colors.White);
+                pMessage.FontSize = 16.0;
+            }
             showMessage(pMessage, 750.0, eType);
         }
 
@@ -250,7 +253,7 @@ namespace WiiTUIO
                     brdOverlay.Background = new SolidColorBrush(Color.FromArgb(192, 255, 0, 0));
                     break;
                 case MessageType.Info:
-                    brdOverlay.Background = new SolidColorBrush(Color.FromArgb(192, 0, 0, 255));
+                    brdOverlay.Background = new SolidColorBrush(Colors.White);
                     break;
             }
 
@@ -473,7 +476,22 @@ namespace WiiTUIO
             // Disconnect the providers.
             this.disconnectProviders();
         }
+
+        private Hyperlink createHyperlink(string sText, string sUri)
+        {
+            Hyperlink link = new Hyperlink();
+            link.Inlines.Add(sText);
+            link.NavigateUri = new Uri(sUri);
+            link.Click += oLinkToBrowser;
+            return link;
+        }
+
+        private RoutedEventHandler oLinkToBrowser = new RoutedEventHandler(delegate(object oSource, RoutedEventArgs pArgs)
+        {
+            System.Diagnostics.Process.Start((oSource as Hyperlink).NavigateUri.ToString());
+        });
         #endregion
+
         #endregion
 
         #region Persistent Calibration Data
@@ -556,11 +574,22 @@ namespace WiiTUIO
             }
         }
 
+        /// <summary>
+        /// Called when there is a mouse down event over the 'brdOverlay'
+        /// </summary>
+        /// Enables the messages that are displayed to disappear on mouse down events
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void brdOverlay_MouseDown(object sender, MouseButtonEventArgs e)
         {
             messageFadeOut(750.0);
         }
 
+        /// <summary>
+        /// Called when the TUIO checkbox is checked
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void chkTUIOEnabled_Checked(object sender, RoutedEventArgs e)
         {
             // Acquire mutual exclusion.
@@ -583,6 +612,11 @@ namespace WiiTUIO
             pCommunicationMutex.ReleaseMutex();
         }
 
+        /// <summary>
+        /// Called when the TUIO checkbox is unchecked
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void chkTUIOEnabled_Unchecked(object sender, RoutedEventArgs e)
         {
             // Acquire mutual exclusion.
@@ -596,6 +630,11 @@ namespace WiiTUIO
             pCommunicationMutex.ReleaseMutex();
         }
 
+        /// <summary>
+        /// Called when the Win7 checkbox is checked
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void chkWin7Enabled_Checked(object sender, RoutedEventArgs e)
         {
             // Acquire mutual exclusion.
@@ -618,6 +657,11 @@ namespace WiiTUIO
             pCommunicationMutex.ReleaseMutex();
         }
 
+        /// <summary>
+        /// Called when the Win7 checkbox is unchecked
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void chkWin7Enabled_Unchecked(object sender, RoutedEventArgs e)
         {
             // Acquire mutual exclusion.
@@ -631,14 +675,34 @@ namespace WiiTUIO
             pCommunicationMutex.ReleaseMutex();
         }
 
+        /// <summary>
+        /// Called when the question mark is clicked next to the TUIO touch events check box
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnAboutTUIO_Click(object sender, RoutedEventArgs e)
         {
-
+            showMessage("TUIO is an open framework that defines a common protocol and API for tangible multitouch surfaces.\n\nThis program is capable of generating events compatible with this protocol.", MessageType.Info);
         }
 
+        /// <summary>
+        /// Called when the question mark is clicked next to the Win7 touch events check box
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnAboutWinTouch_Click(object sender, RoutedEventArgs e)
         {
+            TextBlock pMessage = new TextBlock();
+            pMessage.TextWrapping = TextWrapping.Wrap;
+            pMessage.VerticalAlignment = System.Windows.VerticalAlignment.Center;
+            pMessage.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
+            pMessage.FontSize = 12.0;
+            pMessage.FontWeight = FontWeights.Bold;
 
+            pMessage.Inlines.Add("This application can communicate via the UniSoftHID driver to emulate native muli-touch events in Windows 7.\n\nThe touch messages this application generates are a cut down version of the Multitouch.Driver.Logic namespace within MultiTouchVista.  Please don't ask them for support!\n\nThe UniSoftHID driver can be found bundled with 'MultiTouchVista' here: ");
+            pMessage.Inlines.Add(createHyperlink("MultiTouchVista", "http://multitouchvista.codeplex.com/releases/view/28979"));
+
+            showMessage(pMessage, MessageType.Info);
         }
 
         /// <summary>
@@ -735,15 +799,16 @@ namespace WiiTUIO
             }
         }
 
+        /// <summary>
+        /// Called when exit is clicked in the context menu
+        /// </summary>
+        /// <param name="sender"></param>
+        /// <param name="e"></param>
         private void btnExit_Click(object sender, RoutedEventArgs e)
         {
             App.TB.Dispose();
             Application.Current.Shutdown(0);
         }
-
-        private RoutedEventHandler oLinkToBrowser = new RoutedEventHandler(delegate(object oSource, RoutedEventArgs pArgs){
-                System.Diagnostics.Process.Start((oSource as Hyperlink).NavigateUri.ToString());
-            });
 
         /// <summary>
         /// Called when the 'About' button is clicked.
@@ -756,54 +821,30 @@ namespace WiiTUIO
             pMessage.TextWrapping = TextWrapping.Wrap;
             pMessage.VerticalAlignment = System.Windows.VerticalAlignment.Center;
             pMessage.HorizontalAlignment = System.Windows.HorizontalAlignment.Center;
-            pMessage.FontSize = 12.0;
+            pMessage.FontSize = 11.0;
             pMessage.FontWeight = FontWeights.Bold;
-            pMessage.Foreground = new SolidColorBrush(Colors.White);
 
-            Hyperlink link;
-            SolidColorBrush oLinkColour = new SolidColorBrush(Colors.GreenYellow);
+            pMessage.Inlines.Add("WiiTUIO is an application which stabilises the IR sources captured by a Wii Remote (Wiimote) and presents them as TUIO and Windows 7 Touch messages.\n\n");
             pMessage.Inlines.Add("WiiTUIO was written by John Hardy & Christopher Bull of the HighWire Programme at Lancaster University.\n\nYou can contact us at:\n  ");
-            link = new Hyperlink();
-            link.Inlines.Add("hardyj2@unix.lancs.ac.uk");
-            link.NavigateUri = new Uri("mailto:hardyj2@unix.lancs.ac.uk");
-            link.Click += oLinkToBrowser;
-            link.Foreground = oLinkColour;
-            pMessage.Inlines.Add(link);
+            pMessage.Inlines.Add(createHyperlink("hardyj2@unix.lancs.ac.uk", "mailto:hardyj2@unix.lancs.ac.uk"));
             pMessage.Inlines.Add("\n  ");
-            link = new Hyperlink();
-            link.Inlines.Add("c.bull@lancaster.ac.uk");
-            link.NavigateUri = new Uri("mailto:c.bull@lancaster.ac.uk");
-            link.Click += oLinkToBrowser;
-            link.Foreground = oLinkColour;
-            pMessage.Inlines.Add(link);
-            pMessage.Inlines.Add("\n\nCredits:\n  Johnny Chung Lee:\n    ");
-            link = new Hyperlink();
-            link.Inlines.Add("http://johnnylee.net/projects/wii/");
-            link.NavigateUri = new Uri("http://johnnylee.net/projects/wii/");
-            link.Click += oLinkToBrowser;
-            link.Foreground = oLinkColour;
-            pMessage.Inlines.Add(link);
-            pMessage.Inlines.Add("\n  Brian Peek:\n    ");
-            link = new Hyperlink();
-            link.Inlines.Add("http://www.brianpeek.com/");
-            link.NavigateUri = new Uri("http://www.brianpeek.com/");
-            link.Click += oLinkToBrowser;
-            link.Foreground = oLinkColour;
-            pMessage.Inlines.Add(link);
-            pMessage.Inlines.Add("\n  TUIO Project:\n    ");
-            link = new Hyperlink();
-            link.Inlines.Add("http://www.tuio.org");
-            link.NavigateUri = new Uri("http://www.tuio.org");
-            link.Click += oLinkToBrowser;
-            link.Foreground = oLinkColour;
-            pMessage.Inlines.Add(link);
-            pMessage.Inlines.Add("\n  OSC.NET Library:\n    ");
-            link = new Hyperlink();
-            link.Inlines.Add("http://luvtechno.net/");
-            link.NavigateUri = new Uri("http://luvtechno.net/");
-            link.Click += oLinkToBrowser;
-            link.Foreground = oLinkColour;
-            pMessage.Inlines.Add(link);
+            pMessage.Inlines.Add(createHyperlink("c.bull@lancaster.ac.uk", "mailto:c.bull@lancaster.ac.uk"));
+            pMessage.Inlines.Add("\n\nCredits:\n  ");
+            pMessage.Inlines.Add(createHyperlink("Johnny Chung Lee", "http://johnnylee.net/projects/wii/"));
+            pMessage.Inlines.Add("\n  ");
+            pMessage.Inlines.Add(createHyperlink("Brian Peek", "http://www.brianpeek.com/"));
+            pMessage.Inlines.Add("\n  ");
+            pMessage.Inlines.Add(createHyperlink("Nesher", "http://www.codeplex.com/site/users/view/nesher"));
+            pMessage.Inlines.Add("\n  ");
+            pMessage.Inlines.Add(createHyperlink("TUIO Project", "http://www.tuio.org"));
+            pMessage.Inlines.Add("\n  ");
+            pMessage.Inlines.Add(createHyperlink("MultiTouchVista", "http://multitouchvista.codeplex.com/"));
+            pMessage.Inlines.Add("\n  ");
+            pMessage.Inlines.Add(createHyperlink("OSC.NET Library", "http://luvtechno.net/"));
+            pMessage.Inlines.Add("\n  ");
+            pMessage.Inlines.Add(createHyperlink("WiimoteLib 1.7", "http://wiimotelib.codeplex.com/"));
+            pMessage.Inlines.Add("\n  ");
+            pMessage.Inlines.Add(createHyperlink("HIDLibrary", "http://hidlibrary.codeplex.com/"));
 
             showMessage(pMessage, MessageType.Info);
         }

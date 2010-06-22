@@ -65,7 +65,7 @@
                 </DockPanel>
             </StackPanel>
             <Canvas>
-                <Border Name="brdOverlay" MouseDown="brdOverlay_MouseDown" CornerRadius="7" Visibility="Hidden">
+                <Border Name="brdOverlay" MouseDown="brdOverlay_MouseDown" CornerRadius="7" Visibility="Hidden" Padding="5" >
                 </Border>
             </Canvas>
         </Grid>
