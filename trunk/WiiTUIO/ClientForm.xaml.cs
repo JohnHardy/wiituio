@@ -842,7 +842,7 @@ namespace WiiTUIO
             pMessage.FontWeight = FontWeights.Bold;
 
             pMessage.Inlines.Add("WiiTUIO is an application which stabilises the IR sources captured by a Wii Remote (Wiimote) and presents them as TUIO and Windows 7 Touch messages.\n\n");
-            pMessage.Inlines.Add("WiiTUIO was written by John Hardy & Christopher Bull of the HighWire Programme at Lancaster University.\n\nYou can contact us at:\n  ");
+            pMessage.Inlines.Add("WiiTUIO was written by John Hardy & Christopher Bull of the HighWire Programme at Lancaster University.\nYou can contact us at:\n  ");
             pMessage.Inlines.Add(createHyperlink("hardyj2@unix.lancs.ac.uk", "mailto:hardyj2@unix.lancs.ac.uk"));
             pMessage.Inlines.Add("\n  ");
             pMessage.Inlines.Add(createHyperlink("c.bull@lancaster.ac.uk", "mailto:c.bull@lancaster.ac.uk"));
@@ -862,6 +862,8 @@ namespace WiiTUIO
             pMessage.Inlines.Add(createHyperlink("WiimoteLib 1.7", "http://wiimotelib.codeplex.com/"));
             pMessage.Inlines.Add("\n  ");
             pMessage.Inlines.Add(createHyperlink("HIDLibrary", "http://hidlibrary.codeplex.com/"));
+            pMessage.Inlines.Add("\n  ");
+            pMessage.Inlines.Add(createHyperlink("WPFNotifyIcon", "http://www.hardcodet.net/projects/wpf-notifyicon"));
 
             showMessage(pMessage, MessageType.Info);
         }
