@@ -19,7 +19,6 @@ AUTHORS
 
 WiiTUIO v2
 John Hardy & Christopher Bull
-hardyj2{at}unix.lancs.ac.uk & c.bull{at}lancaster.ac.uk
 HighWire Programme, Lancaster University
 22-06-2010
 
